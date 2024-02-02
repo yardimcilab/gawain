@@ -1,5 +1,4 @@
-# gawain dependencies
-name: gawain
+name: wistan
 channels:
   - defaults
 dependencies:

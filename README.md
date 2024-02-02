@@ -6,6 +6,8 @@
 - [Infrastructure tools](#wistans-infrastructure-tools)
 - [Introduction to Unix pipeline control](#introduction-to-unix-pipeline-control)
 
+![Wistan Icon](Wistan.png)
+
 ## Installation
 ```
 curl -O https://raw.githubusercontent.com/yardimcilab/wistan/main/wistan.yaml
@@ -92,5 +94,3 @@ pass the text.
 ## Why "Wistan"?
 
 One of the author's favorite books is [The Buried Giant](https://www.amazon.com/Buried-Giant-Vintage-International/dp/0307455793) by [Kazuo Ishiguro](https://en.wikipedia.org/wiki/Kazuo_Ishiguro). The breath of the dragon Querig spreads amnesia across the land of medieval Briton. Wistan slays the dragon, dispelling the mist.
-
-![Wistan Icon](Wistan.png)

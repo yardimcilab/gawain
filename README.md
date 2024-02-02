@@ -118,7 +118,16 @@ sanb.set_notebook("demo.ipynb")
 
 This initializes `sanb` with the name of the notebook, making it possible for the pipeline to append its outputs to the notebook itself.
 
-**Cell 2: Saving plugin script**
+**Cell 2: Download data**
+```
+!mkdir -p ~/data
+!wget -P ~/data/ https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM4604nnn/GSM4604290/suppl/GSM4604290%5F990.iced.mcool
+!wget -P ~/data/ https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM4604nnn/GSM4604276/suppl/GSM4604276%5F868.iced.mcool
+!wget -P ~/data/ https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM4604nnn/GSM4604278/suppl/GSM4604278%5F1953.iced.mcool
+```
+This cell downloads our data (390M).
+
+**Cell 3: Saving plugin script**
 
 ```
 hicrep_mean=r'''#!/usr/bin/env python3

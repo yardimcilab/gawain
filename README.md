@@ -18,7 +18,7 @@ Wistan embodies the [Unix philosophy](http://www.catb.org/~esr/writings/taoup/ht
 
 It is built on an infrastructure of [small](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2878022), [simple](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2877917), [modular](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2877537) [generative tools](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2878742), [composed](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2877684) into [YAML](https://yaml.org/)-based [textual](http://www.catb.org/~esr/writings/taoup/html/ch05s01.html) and [extensible](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2879112) pipelines.
 
-**Wistan's is modest.** All its parts are orthogonal. You can use and adjust the parts you like:
+**Wistan is modest.** All its parts are orthogonal. You can use and adjust the parts you like:
  - A particular infrastructure tool, like `itertools-cli`
  - A single analysis pipeline built on Wistan infrastructure
  - `sanb` for self-aware Jupyter notebooks

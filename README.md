@@ -1,42 +1,42 @@
-**Gawain** is an environment for building, running, organizing and sharing data analysis pipelines.
+**Wistan** is an environment for building, running, organizing and sharing data analysis pipelines.
 
 ## Table of Contents
 - [Installation](#installation)
-- [Paradigm](#gawains-paradigm)
-- [Infrastructure tools](#gawains-infrastructure-tools)
+- [Paradigm](#wistans-paradigm)
+- [Infrastructure tools](#wistans-infrastructure-tools)
 - [Introduction to Unix pipeline control](#introduction-to-unix-pipeline-control)
 
 ## Installation
 ```
-curl -O https://raw.githubusercontent.com/yardimcilab/gawain/main/gawain.yaml
-mamba env create -f gawain.yaml
-mamba activate gawain
+curl -O https://raw.githubusercontent.com/yardimcilab/wistan/main/wistan.yaml
+mamba env create -f wistan.yaml
+mamba activate wistan
 ```
 
-## Gawain's paradigm
-Gawain embodies the [Unix philosophy](http://www.catb.org/~esr/writings/taoup/html/index.html) of software design.
+## Wistan's paradigm
+Wistan embodies the [Unix philosophy](http://www.catb.org/~esr/writings/taoup/html/index.html) of software design.
 
 It is built on an infrastructure of [small](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2878022), [simple](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2877917), [modular](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2877537) [generative tools](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2878742), [composed](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2877684) into [YAML](https://yaml.org/)-based [textual](http://www.catb.org/~esr/writings/taoup/html/ch05s01.html) and [extensible](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2879112) pipelines.
 
-**Gawain's is modest.** All its parts are orthogonal. You can use and adjust the parts you like:
+**Wistan's is modest.** All its parts are orthogonal. You can use and adjust the parts you like:
  - A particular infrastructure tool, like `itertools-cli`
- - A single analysis pipeline built on Gawain infrastructure
+ - A single analysis pipeline built on Wistan infrastructure
  - `sanb` for self-aware Jupyter notebooks
 
 It is fully compatible with standard workflow management tools like [Snakemake](https://snakemake.readthedocs.io/en/stable/) and [Nextflow](https://www.nextflow.io/).
 Indeed, its original motivation was to add value to these systems by making it easier to write the shell-based analyses that they orchestrate.
 
-**Gawain is ambitious.**
+**Wistan is ambitious.**
  - Infrastructure tools make it easy to orchestrate complex comparisons across data samples.
  - Pipelines run from within self-aware Jupyter notebooks append results to the notebook itself.
  - Figures are produced and tweaked in the notebook's interactive environment.
- - In the future, Gawain will include the ability to produce and store structured descriptions of projects, data and analyses with ontologies,
+ - In the future, Wistan will include the ability to produce and store structured descriptions of projects, data and analyses with ontologies,
    such as those hosted at [BioPortal](https://bioportal.bioontology.org/) and the [Ontology Lookup Service (OLS)](https://www.ebi.ac.uk/ols4).
 
-When used to its full potential, Gawain results in a Jupyter notebook containing both the pipeline(s) and its intermediate and final outputs.
+When used to its full potential, Wistan results in a Jupyter notebook containing both the pipeline(s) and its intermediate and final outputs.
 This makes the analysis instantly reproducible and easy to share. It is also helpful when you wish to review your own work in the future.
 
-## Gawain's infrastructure tools
+## Wistan's infrastructure tools
 
  - `itertools-cli`: A CLI for parts of the [itertools](https://docs.python.org/3/library/itertools.html) library. Generate combinations of filenames and other things. Receives data from `stdin` and writes it YAMLized to `stdout`.
  - `pathlib-cli`: A CLI for parts of the [pathlib](https://docs.python.org/3/library/pathlib.html) library. Extract parts of paths, such as the directory, prefix, or suffix.
@@ -49,15 +49,15 @@ This makes the analysis instantly reproducible and easy to share. It is also hel
   - `datavis-cli`: A CLI to output boilerplate Python code for loading YAML data to a pandas dataframe and producing a figure based on it. Currently just supports Seaborn's `heatmap` and `clustermap`, but can be straightforwaredly extended to any data visualization package in any language.
   - `nbcell-check-cli`: A tool for running regex on Jupyter notebook cells using Python's [re](https://docs.python.org/3/library/re.html) package. Returns the index of cells matching the regex.
   - `nbformat-cli`: A tool for manipulating Jupyter notebook cells at the command line, based on the [nbformat](https://nbformat.readthedocs.io/en/latest/) package. Currently only adds cells at a specified index, but aims to perform other manipuations: removing, overwriting, deleting, moving, reading and writing notebook and cell metadata and so forth.
-  -  `sanb`: Used in conjunction with `nbcell-check-cli` and `nbformat-cli` to make Jupyter notebooks "self-aware." Notebook cells normally have no ability to access their own cell metadata or notebook metadata, making it difficult to make notebooks self-editing. `sanb` allows the user to specify the path of the notebook itself and give cells cell-specific identifiers in code. This lets cells discover their own index in the list of cells the notebook contains. In turn, this allows code in cells to edit themselves and the notebook as a whole. This is what permits a Gawain pipeline run from a Jupyter notebook to append to itself the results of a pipeline, such as code to make and edit a figure.
+  -  `sanb`: Used in conjunction with `nbcell-check-cli` and `nbformat-cli` to make Jupyter notebooks "self-aware." Notebook cells normally have no ability to access their own cell metadata or notebook metadata, making it difficult to make notebooks self-editing. `sanb` allows the user to specify the path of the notebook itself and give cells cell-specific identifiers in code. This lets cells discover their own index in the list of cells the notebook contains. In turn, this allows code in cells to edit themselves and the notebook as a whole. This is what permits a Wistan pipeline run from a Jupyter notebook to append to itself the results of a pipeline, such as code to make and edit a figure.
 
 ## Introduction to Unix pipeline control
 **YAML, stdin and stdout, |, ||, >, >>, &, &&, (), ; and tee**
 
 Not all users are familiar with YAML or the Unix flow-of-control operators.
 
-If you want to use a Gawain pipeline, fortunately, you don't need to. But you most likely will
-if you want to build a pipeline on Gawain infrastructure.
+If you want to use a Wistan pipeline, fortunately, you don't need to. But you most likely will
+if you want to build a pipeline on Wistan infrastructure.
 
 Fortunately, these can become second-nature in a day or two.
 
@@ -88,3 +88,7 @@ pass the text.
 - **() (Subshell):** Commands inside parentheses are executed in a subshell. This means they are executed in a separate process, and any changes to the environment (like changing directories or setting variables) do not affect the current shell. For example, `(cd folder; command)` runs command in folder, but the current shell's directory does not change.
 - **; (Sequential Execution):** It separates commands to be executed sequentially, regardless of the success or failure of the previous command. For example, `command1; command2` executes `command1` and then `command2`, one after the other.
 - **tee (Branch Output):** The tee command reads from standard input and writes to both standard output and one or more files, effectively branching the output. For example, `command | tee file.txt` displays the output of command on the screen and also writes it to file.txt.
+
+## Why "Wistan"?
+
+One of the author's favorite books is [The Buried Giant](https://www.amazon.com/Buried-Giant-Vintage-International/dp/0307455793) by [Kazuo Ishiguro](https://en.wikipedia.org/wiki/Kazuo_Ishiguro). The breath of the dragon Querig spreads amnesia across the land of medieval Briton. Wistan slays the dragon, dispelling the mist.

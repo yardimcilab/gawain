@@ -13,6 +13,7 @@ dependencies:
   - pandas
   - numpy
   - pip:
+    - sanb
     - nbformat-cli
     - nbcell-check-cli
     - datavis-cli

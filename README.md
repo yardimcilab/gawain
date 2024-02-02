@@ -1,6 +1,7 @@
 **Wistan** is a platform to build, run, organize and share data analysis pipelines.
 
 **Author:** Ben Skubi, M.S. BME (skubi@ohsu.edu)
+
 **Institutional affiliation:** [Yardimci](https://www.ohsu.edu/people/galip-grkan-yardimci-phd) and [Adey](https://adeylab.org/) labs, [CEDAR](https://www.ohsu.edu/knight-cancer-institute/cedar), [OHSU BME](https://www.ohsu.edu/school-of-medicine/biomedical-engineering)
 
 ## Table of Contents

@@ -1,4 +1,4 @@
-**Wistan** is an environment for building, running, organizing and sharing data analysis pipelines.
+**Wistan** is an environment to build, run, organize and share data analysis pipelines.
 
 ## Table of Contents
 - [Installation](#installation)

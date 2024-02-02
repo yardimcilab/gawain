@@ -29,7 +29,22 @@ Gawain is ambitious.
 When used to its full potential, Gawain results in a Jupyter notebook containing both the pipeline(s) and its intermediate and final outputs.
 This makes the analysis instantly reproducible and easy to share. It is also helpful when you wish to review your own work in the future.
 
-**YAML, stdin and stdout, |, ||, >, >>, &, &&, (), ; and tee**
+**Description of Gawain's infrastructure tools**
+
+ - `itertools-cli`: A CLI for parts of the [itertools](https://docs.python.org/3/library/itertools.html) library. Generate combinations of filenames and other things. Receives data from `stdin` and writes it YAMLized to `stdout`.
+ - `pathlib-cli`: A CLI for parts of the [pathlib](https://docs.python.org/3/library/pathlib.html) library. Extract parts of paths, such as the directory, prefix, or suffix.
+ - `pandas-cli`: A CLI for constructing a [pandas DataFrames](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html) named `df` from YAML, executing arbitrary Python commands on it, and (optionally) outputting the YAMLized result. This can be helpful to reshape a dataframe for analysis or display.
+ - `curry-batch`: A text filter and command orchestrator. Input is a YAML list of argument lists piped from `stdin` as well as a list of command templates passed as arguments.
+   All argument lists are the same length. Member `n` in each argument list replaces the wildcard `{n}` in each command if present. Not all wildcards need to be used or replaced. This produces a set of [curried](https://python-course.eu/advanced-python/currying-in-python.php) functions, which are run batched in parallel. The `stdout` from each curried function is stored in a new list in the order in which the commands were listed. Outputs from the set of curried functions are in the same order as the arguments passed. This can be used:
+    - As a simple text filter (`cat args.txt | curry-batch "echo {1}" "echo {2}" "echo {1}{1}{2}{2}"`)
+    - To orchestrate execution of the analysis tool
+    - To load the contents of output files scattered on the hard drive into a single dataframe for aggregation, analysis and display
+  - `datavis-cli`: A CLI to output boilerplate Python code for loading YAML data to a pandas dataframe and producing a figure based on it. Currently just supports Seaborn's `heatmap` and `clustermap`, but can be straightforwaredly extended to any data visualization package in any language.
+  - `nbcell-check-cli`: A tool for running regex on Jupyter notebook cells using Python's [re](https://docs.python.org/3/library/re.html) package. Returns the index of cells matching the regex.
+  - `nbformat-cli`: A tool for manipulating Jupyter notebook cells at the command line, based on the [nbformat](https://nbformat.readthedocs.io/en/latest/) package. Currently only adds cells at a specified index, but aims to perform other manipuations: removing, overwriting, deleting, moving, reading and writing notebook and cell metadata and so forth.
+  -  `sanb`: Used in conjunction with `nbcell-check-cli` and `nbformat-cli` to make Jupyter notebooks "self-aware." Notebook cells normally have no ability to access their own cell metadata or notebook metadata, making it difficult to make notebooks self-editing. `sanb` allows the user to specify the path of the notebook itself and give cells cell-specific identifiers in code. This lets cells discover their own index in the list of cells the notebook contains. In turn, this allows code in cells to edit themselves and the notebook as a whole. This is what permits a Gawain pipeline run from a Jupyter notebook to append to itself the results of a pipeline, such as code to make and edit a figure.
+
+**Introduction to Unix pipeline control: YAML, stdin and stdout, |, ||, >, >>, &, &&, (), ; and tee**
 
 Not all users are familiar with YAML or the Unix flow-of-control operators.
 
@@ -65,7 +80,3 @@ pass the text.
 - **() (Subshell):** Commands inside parentheses are executed in a subshell. This means they are executed in a separate process, and any changes to the environment (like changing directories or setting variables) do not affect the current shell. For example, `(cd folder; command)` runs command in folder, but the current shell's directory does not change.
 - **; (Sequential Execution):** It separates commands to be executed sequentially, regardless of the success or failure of the previous command. For example, `command1; command2` executes `command1` and then `command2`, one after the other.
 - **tee (Branch Output):** The tee command reads from standard input and writes to both standard output and one or more files, effectively branching the output. For example, `command | tee file.txt` displays the output of command on the screen and also writes it to file.txt.
-
-**Description of tools**
-
-`itertools-cli`: a CLI for parts of the [itertools] library, operating on 

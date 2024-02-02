@@ -223,7 +223,8 @@ uses a perceptually-accurate, colorblind-friendly colormap from [colorcet](https
 can be tweaked in the cell and the clustermap immediately reproduced.
 
 After these cells are produced by the pipeline cell, the notebook will need to be reloaded using `File/Reload Notebook From Disk`.
-![image](https://github.com/yardimcilab/wistan/assets/86805107/a0225bb1-346a-4c94-88d5-fc7ff92fa2b4)
+![image](https://github.com/yardimcilab/wistan/assets/86805107/4a9afd91-d88b-4966-851d-d2d260068ea9)
+
 
 **Cell 4: Dynamically generated data-loader**
 ```

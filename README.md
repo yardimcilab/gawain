@@ -20,7 +20,7 @@ mamba activate wistan
 ```
 
 ## Demo
-
+After installing Wistan and activating the environment, you can [download](https://raw.githubusercontent.com/yardimcilab/wistan/main/demo-before.ipynb) a carefully-described working demo pipeline. This demo takes you from downloading the data to running the analysis and visualizing the results. Alternatively, you can view the notebook [before](https://nbviewer.org/github/yardimcilab/wistan/blob/main/demo-before.ipynb) and [after](https://nbviewer.org/github/yardimcilab/wistan/blob/main/demo-after.ipynb) the analysis is run on nbviewer.
 
 ## Wistan's paradigm
 Wistan embodies the [Unix philosophy](http://www.catb.org/~esr/writings/taoup/html/index.html) of software design.

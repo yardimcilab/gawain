@@ -1,0 +1,21 @@
+# environment.yaml
+name: myenv
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - click
+  - pyyaml
+  - nbformat
+  - jupyterlab
+  - seaborn
+  - pandas
+  - numpy
+  - pip:
+    - nbformat-cli
+    - nbcell-check-cli
+    - datavis-cli
+    - pathlib-cli
+    - curry-batch
+    - pandas-cli
+    - itertools-cli

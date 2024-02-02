@@ -102,4 +102,4 @@ pass the text.
 
 ## Why "Wistan"?
 
-One of the author's favorite books is [The Buried Giant](https://www.amazon.com/Buried-Giant-Vintage-International/dp/0307455793) by [Kazuo Ishiguro](https://en.wikipedia.org/wiki/Kazuo_Ishiguro). The breath of the dragon Querig spreads amnesia across the land of medieval Briton. Wistan slays the dragon, dispelling the mist.
+One of the author's favorite books is [The Buried Giant](https://www.amazon.com/Buried-Giant-Vintage-International/dp/0307455793) by [Kazuo Ishiguro](https://en.wikipedia.org/wiki/Kazuo_Ishiguro). The breath of the dragon Querig spreads amnesia across the land of medieval Briton. Wistan slays the dragon, dispelling the mists of oblivion once and for all.

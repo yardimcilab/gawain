@@ -5,6 +5,7 @@
 
 ## Table of Contents
 - [Installation](#installation)
+- [Demo](#demo)
 - [Paradigm](#wistans-paradigm)
 - [Infrastructure tools](#wistans-infrastructure-tools)
 - [Introduction to Unix pipeline control](#introduction-to-unix-pipeline-control)
@@ -17,6 +18,9 @@ curl -O https://raw.githubusercontent.com/yardimcilab/wistan/main/wistan.yaml
 mamba env create -f wistan.yaml
 mamba activate wistan
 ```
+
+## Demo
+
 
 ## Wistan's paradigm
 Wistan embodies the [Unix philosophy](http://www.catb.org/~esr/writings/taoup/html/index.html) of software design.
@@ -98,193 +102,7 @@ pass the text.
 
 ## Anatomy of a Wistan pipeline
 
-For mass adoption, you should probably make a tailored command-line interface for your pipeline. Here, we're going to look at the building blocks
-of the first pipeline built with Wistan. It originates in the bioinformatics field of the study of chromatin conformation. The author was using a tool
-called [hicrep](https://github.com/dejunlin/hicrep) to compute sample-vs-sample reproducibility scores for a large number of data files. The challenge
-was that `hicrep` only allows one to to run a single sample-vs-sample comparison. Its output is a plaintext series of comments and per-chromosome
-reproducibility scores in a text file.
 
-The author wanted to batch `hicrep` comparisons on a large number of data files, compute the mean of the per-chromosome scores for each comparison,
-and produce a [clustermap](https://seaborn.pydata.org/generated/seaborn.clustermap.html) with row and column captions being the data file prefixes.
-Having a whole PhD in this subfield ahead of him, the author wanted a tool to make this conveniently in the future.
-
-The pipeline starts with a single two-cell Jupyter notebook.
-
-**Cell 1: Initializing `sanb`**
-```
-import sanb
-sanb.set_notebook("demo.ipynb")
-```
-
-This initializes `sanb` with the name of the notebook, making it possible for the pipeline to append its outputs to the notebook itself.
-
-**Cell 2: Download data**
-```
-!mkdir -p ~/data
-!wget -P ~/data/ https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM4604nnn/GSM4604290/suppl/GSM4604290%5F990.iced.mcool
-!wget -P ~/data/ https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM4604nnn/GSM4604276/suppl/GSM4604276%5F868.iced.mcool
-!wget -P ~/data/ https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM4604nnn/GSM4604278/suppl/GSM4604278%5F1953.iced.mcool
-```
-This cell downloads our data (390M).
-
-**Cell 3: Saving plugin script**
-
-```
-hicrep_mean=r'''#!/usr/bin/env python3
-import sys, statistics, click
-
-hicrep_output = sys.stdin.read().split(\"\\n\")
-
-scc_scores = []
-for line in hicrep_output:
-    try:
-        scc_scores.append(float(line))
-    except ValueError:
-        continue
-click.echo(statistics.mean(scc_scores))'''
-!mkdir -p ~/scripts && echo "$hicrep_mean" > ~/scripts/hicrep_mean
-!chmod +x ~/scripts/hicrep_mean
-```
-A single, small, specialized plugin is necessary to transform the raw text output from our `hicrep` analysis tool into the mean value we
-are interested in. For easy sharing, we store the plugin in the Jupyter notebook itself and write it to a file for use in the main pipeline.
-Note that setting permissions is important!
-
-**Cell 3: Main pipeline**
-
-```
-sanb.last = "samb_cell0"; sanb.lidx = sanb.lastidx()
-!mkdir -p scc
-!ls ~/Desktop/zhang_aml/aml/*.mcool | itertools-cli combinations-with-replacement 2 | curry-batch "echo {{1}}" "echo {{2}}" "pathlib-cli prefix {{1}}" "pathlib-cli prefix {{2}}" > hicrep_inputs.txt
-!cat hicrep_inputs.txt | curry-batch "hicrep {{1}} {{2}} scc/{{3}}_{{4}}.txt --h 1 --binSize 1000000 --dBPMax 5000000" > /dev/null && cat hicrep_inputs.txt | curry-batch "echo {{3}}" "echo {{4}}" "cat scc/{{3}}_{{4}}.txt" > hicrep_results.txt
-!cat hicrep_results.txt | curry-batch "echo {{1}}" "echo {{2}}" "echo '{{3}}' | ~/scripts/hicrep_mean" | curry-batch "echo {{1}}" "echo {{2}}" "echo {{3}}" "echo {{2}}" "echo {{1}}" "echo {{3}}" | pandas-cli dataframe "df = pd.DataFrame(df.values.reshape(2*df.shape[0], 3)).drop_duplicates().pivot(index=0, columns=1, values=2).apply(pd.to_numeric)" > hicrep_data.yaml
-!datavis-cli load-dataframe hicrep_data.yaml df | nbformat-cli cell add {sanb.notebook} {sanb.lidx} --distance 1
-!datavis-cli clustermap df | nbformat-cli cell add {sanb.notebook} {sanb.lidx} --distance 2
-```
-
-Let's take this line by line.
-
-```
-sanb.last = "samb_cell0"; sanb.lidx = sanb.lastidx()
-```
-This gives the cell a unique ID, stored in the variable `sanb.last`. The `sanb.lastidx()` function looks up in this notebook the index
-of a cell containing the phrase `sanb.last = [value of sanb.last]`. This retrieves the index of the current cell.
-
-```
-!mkdir -p scc
-```
-We create a folder to store the 289 intermediateper-comparison output files our analysis tool will generate for a 17-sample cross-comparison.
-
-```
-!ls ~/data/*.mcool | itertools-cli combinations-with-replacement 2 | curry-batch "echo {{1}}" "echo {{2}}" "pathlib-cli prefix {{1}}" "pathlib-cli prefix {{2}}" > hicrep_inputs.txt
-```
-The data to be compared has a file extension `.mcool`. We load all the filenames to be compared, then generate combinations with replacement.
-We then extend this to a list of four strings: the two filenames, plus the filename prefixes that we wish to use.
-We store this combination in `hicrep_inputs.txt` using a redirect for convenience and as a record of our output so far.
-
-```
-!cat hicrep_inputs.txt | curry-batch "hicrep {{1}} {{2}} scc/{{3}}_{{4}}.txt --h 1 --binSize 1000000 --dBPMax 5000000" > /dev/null && cat hicrep_inputs.txt | curry-batch "echo {{3}}" "echo {{4}}" "cat scc/{{3}}_{{4}}.txt" > hicrep_results.txt
-```
-We load the list of filenames and prefixes. Note that this is not strictly necessary - we could have just piped the output from the previous line into this one.
-Next, we call the main `hicrep` command to compute reproducibility scores on all pairs of input files. For each list of `file1 file2 prefix1 prefix2` strings in the input:
- - `{{1}}` and `{{2}}` are replaced by `file1` and `file2`, and represent the input files.
- - `{{3}}` and `{{4}}` are replaced by `prefix1` and `prefix2`. `scc/{{3}}_{{4}}.txt` will be the location of the output file.
-We silence the message outputs from hicrep by redirecting them to `/dev/null`. The `hicrep` program saves its outputs to individual text files, so we need to retrieve them.
-We do this by once again piping our comparison filenames and prefixes and using `curry-batch` to load the raw output file contents using `cat`.
-Again, we save this output to `hicrep_results.txt` as a record of our work so far and for convenience, but this isn't strictly necessary.
-
-```
-!cat hicrep_results.txt | curry-batch "echo {{1}}" "echo {{2}}" "echo '{{3}}' | ~/scripts/hicrep_mean" | curry-batch "echo {{1}}" "echo {{2}}" "echo {{3}}" "echo {{2}}" "echo {{1}}" "echo {{3}}" | pandas-cli dataframe "df = pd.DataFrame(df.values.reshape(2*df.shape[0], 3)).drop_duplicates().pivot(index=0, columns=1, values=2).apply(pd.to_numeric)" > hicrep_data.yaml
-```
-We use `curry-batch` to feed in our previous results into a custom Python script `hicrep_mean` tailor-made for this step, while preserving the filename prefixes for later captioning.
-```
-#!/usr/bin/env python3
-import sys, statistics, click
-
-hicrep_output = sys.stdin.read().split('\n')
-scc_scores = []
-for line in hicrep_output:
-    try:
-        scc_scores.append(float(line))
-    except ValueError:
-        continue
-click.echo(statistics.mean(scc_scores))
-```
-This script merely filters for floating-point numbers in the output for a particular comparison, computes the mean, and prints it to `stdout`. This is the only analysis-specific script in the pipeline.
-We then use `curry-batch` to duplicate the result with the order reversed, so that we can conveniently produce a symmetric matrix. This gives us a six-element `col_m row_n value col_n row_m value` list.
-We then load this into a pandas dataframe and reshape it to get the desired square, symmetric matrix labeled with our captions. First, we append it to a `2nx3` matrix, with row caption, column caption,
-and value columns. As the main diagonal is duplicated, we drop duplicates. Then we create a pivot dataframe to get it into the desired square shape and convert the values to numeric. Finally, we save this
-to a data file `hicrep_data.yaml` for convenience.
-
-```
-!datavis-cli load-dataframe hicrep_data.yaml df | nbformat-cli cell add {sanb.notebook} {sanb.lidx} --distance 1
-```
-Our computations are done, and all that remains is to create a figure in the interactive environment of our Jupyter notebook for easy tweaking.
-This function starts by leveraging the `sanb` package to add a new cell to the notebook immediately after the pipeline-running cell containing code
-to load our output data into a pandas DataFrame called `df`.
-
-```
-!datavis-cli clustermap df | nbformat-cli cell add {sanb.notebook} {sanb.lidx} --distance 2
-```
-Finally, we add another cell immediately after the data-loading function that contains the function call
-to produce a Seaborn clustermap from our data. The arguments to that function are comprehensively and explicitly
-initialized to default values, and a link to the Seaborn clustermap API is printed for reference. The clustermap
-uses a perceptually-accurate, colorblind-friendly colormap from [colorcet](https://colorcet.com/download/index.html) by default. These parameters
-can be tweaked in the cell and the clustermap immediately reproduced.
-
-After these cells are produced by the pipeline cell, the notebook will need to be reloaded using `File/Reload Notebook From Disk`.
-![image](https://github.com/yardimcilab/wistan/assets/86805107/4a9afd91-d88b-4966-851d-d2d260068ea9)
-
-
-**Cell 4: Dynamically generated data-loader**
-```
-
-import pandas as pd
-import yaml
-
-with open("hicrep_data.yaml", 'r') as file:
-    df = pd.DataFrame(yaml.safe_load(file))
-print(df.head())
-print(df.describe())
-```
-This merely loads our output data from the main pipeline and prints some summary statistics. The cell and its code are auto-generated by the pipeline.
-
-**Cell 5: Dynamically generated clustermap visualization**
-```
-
-import seaborn as sns
-import matplotlib.pyplot as plt
-import colorcet as cc
-
-# Default colormap is perceptually-accurate and colorblind-friendly
-# See https://colorcet.com/index.html for details
-# Seaborn clustermap documentation
-# https://seaborn.pydata.org/generated/seaborn.clustermap.html
-sns.clustermap(df, 
-               pivot_kws=None, 
-               method='average', 
-               metric='euclidean', 
-               z_score=None, 
-               standard_scale=None, 
-               figsize=(10, 10), 
-               cbar_kws=None, 
-               row_cluster=True, 
-               col_cluster=True, 
-               row_linkage=None, 
-               col_linkage=None, 
-               row_colors=None, 
-               col_colors=None, 
-               mask=None, 
-               dendrogram_ratio=0.2, 
-               colors_ratio=0.03, 
-               cbar_pos=(0.02, 0.8, 0.05, 0.18), 
-               tree_kws=None, 
-               cmap=cc.cm.CET_CBL1)
-```
-This is pipeline-generated boilerplate code to make a Seaborn clustermap displaying our results, which are now stored in `df`. 
-
-As you can see, outside the tiny analysis-specific `hicrep_mean` plugin script, all components of this pipeline are simple reusable parts.
-Although this pipeline is unwieldly in the exposed form presented here, it can be easily wrapped into a more convenient command line interface
-exposing just the variables the user needs to set. We provide it here as an example of how to build a useful Wistan pipeline.
 
 ## Why "Wistan"?
 

@@ -28,3 +28,44 @@ Gawain is ambitious.
 
 When used to its full potential, Gawain results in a Jupyter notebook containing both the pipeline(s) and its intermediate and final outputs.
 This makes the analysis instantly reproducible and easy to share. It is also helpful when you wish to review your own work in the future.
+
+**YAML, stdin and stdout, |, ||, >, >>, &, &&, (), ; and tee**
+
+Not all users are familiar with YAML or the Unix flow-of-control operators.
+
+If you want to use a Gawain pipeline, fortunately, you don't need to. But you most likely will
+if you want to build a pipeline on Gawain infrastructure.
+
+Fortunately, these can become second-nature in a day or two.
+
+As its developers say, "YAML is a human-friendly data serialization language for all programming languages."
+It can encode nested `lists` and `dicts`. Here is an example of a list of 2-element lists.
+```
+- - file1.txt
+  - file1.txt
+- - file1.txt
+  - file2.txt
+- - file2.txt
+  - file1.txt
+- - file2.txt
+  - file2.txt
+```
+Popular languages like [Python](https://www.python.org/) have simple ways to load and dump data structures to YAML.
+Instead of trying to pass binary datastructures directly between pipeline components, we serialize them to YAML and
+pass the text.
+
+**stdin (Standard Input)** is a stream from which a program reads its input data. It's typically associated with the keyboard input or another program's output.
+**stdout (Standard Output)** is a stream to which a program writes its output data. It's typically displayed on the screen or can be redirected to a file or another program.
+**| (Pipe):** Used to pass the output of one command as the input to another command. For example, `ls | grep "txt"` uses the output of ls as the input for grep to filter out lines containing "txt".
+**|| (OR):** Used between two commands. The second command is executed only if the first command fails (exits with a non-zero status). For example, `command1 || command2 means command2` is executed only if `command1` fails.
+**> (Redirect Output):** This operator is used to redirect the output of a command to a file, overwriting the file if it already exists. For example, `echo "Hello" > file.txt` writes "Hello" to file.txt.
+**>> (Append Output):** Similar to `>`, but it appends the output to the file instead of overwriting it. For example, `echo "World" >> file.txt` adds "World" to the end of file.txt.
+**& (Background Execution):** When added at the end of a command, it runs the command in the background, allowing the user to continue using the shell without waiting for the command to complete. For example, `long_running_command &` starts the command and returns the prompt immediately.
+**&& (AND):** Used between two commands. The second command is executed only if the first command succeeds (exits with a status of zero). For example, `command1 && command2` means command2 is executed only if `command1` is successful.
+**() (Subshell):** Commands inside parentheses are executed in a subshell. This means they are executed in a separate process, and any changes to the environment (like changing directories or setting variables) do not affect the current shell. For example, `(cd folder; command)` runs command in folder, but the current shell's directory does not change.
+**; (Sequential Execution):** It separates commands to be executed sequentially, regardless of the success or failure of the previous command. For example, `command1; command2` executes `command1` and then `command2`, one after the other.
+**tee (Branch Output):** The tee command reads from standard input and writes to both standard output and one or more files, effectively branching the output. For example, `command | tee file.txt` displays the output of command on the screen and also writes it to file.txt.
+
+**Description of tools**
+
+`itertools-cli`: a CLI for parts of the [itertools] library, operating on 

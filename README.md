@@ -119,11 +119,33 @@ sanb.set_notebook("demo.ipynb")
 This initializes `sanb` with the name of the notebook, making it possible for the pipeline to append its outputs to the notebook itself.
 
 **Cell 2**
+
+```
+hicrep_mean=r'''#!/usr/bin/env python3
+import sys, statistics, click
+
+hicrep_output = sys.stdin.read().split(\"\\n\")
+
+scc_scores = []
+for line in hicrep_output:
+    try:
+        scc_scores.append(float(line))
+    except ValueError:
+        continue
+click.echo(statistics.mean(scc_scores))'''
+!mkdir -p ~/scripts && echo "$hicrep_mean" > ~/scripts/hicrep_mean
+!chmod +x ~/scripts/hicrep_mean
+```
+A single, small, specialized plugin is necessary to transform the raw text output from our `hicrep` analysis tool into the mean value we
+are interested in. For easy sharing, we store the plugin in the Jupyter notebook itself and write it to a file for use in the main pipeline.
+Note that setting permissions is important!
+
 ```
 sanb.last = "samb_cell0"; sanb.lidx = sanb.lastidx()
-!ls ~/data/*.mcool | itertools-cli combinations-with-replacement 2 | curry-batch "echo {{1}}" "echo {{2}}" "pathlib-cli prefix {{1}}" "pathlib-cli prefix {{2}}" > hicrep_inputs.txt
-!cat hicrep_inputs.txt | curry-batch "hicrep {{1}} {{2}} scc/{{3}}_{{4}}.txt --h 1 --binSize 1000000 --dBPMax 5000000" > /dev/null && cat hicrep_inputs.txt | curry-batch "echo {{3}}" "echo {{4}}" > hicrep_results.txt
-!cat hicrep_results.txt | curry-batch "pathlib-cli prefix {{1}}" "pathlib-cli prefix {{2}}" "echo '{{3}}' | ~/scripts/hicrep_mean" | curry-batch "echo {{1}}" "echo {{2}}" "echo {{3}}" "echo {{2}}" "echo {{1}}" "echo {{3}}" | pandas-cli dataframe "df = pd.DataFrame(df.values.reshape(2*df.shape[0], 3)).drop_duplicates().pivot(index=0, columns=1, values=2).apply(pd.to_numeric)" > hicrep_data.yaml
+!mkdir -p scc
+!ls ~/Desktop/zhang_aml/aml/*.mcool | itertools-cli combinations-with-replacement 2 | curry-batch "echo {{1}}" "echo {{2}}" "pathlib-cli prefix {{1}}" "pathlib-cli prefix {{2}}" > hicrep_inputs.txt
+!cat hicrep_inputs.txt | curry-batch "hicrep {{1}} {{2}} scc/{{3}}_{{4}}.txt --h 1 --binSize 1000000 --dBPMax 5000000" > /dev/null && cat hicrep_inputs.txt | curry-batch "echo {{3}}" "echo {{4}}" "cat scc/{{3}}_{{4}}.txt" > hicrep_results.txt
+!cat hicrep_results.txt | curry-batch "echo {{1}}" "echo {{2}}" "echo '{{3}}' | ~/scripts/hicrep_mean" | curry-batch "echo {{1}}" "echo {{2}}" "echo {{3}}" "echo {{2}}" "echo {{1}}" "echo {{3}}" | pandas-cli dataframe "df = pd.DataFrame(df.values.reshape(2*df.shape[0], 3)).drop_duplicates().pivot(index=0, columns=1, values=2).apply(pd.to_numeric)" > hicrep_data.yaml
 !datavis-cli load-dataframe hicrep_data.yaml df | nbformat-cli cell add {sanb.notebook} {sanb.lidx} --distance 1
 !datavis-cli clustermap df | nbformat-cli cell add {sanb.notebook} {sanb.lidx} --distance 2
 ```
@@ -135,6 +157,11 @@ sanb.last = "samb_cell0"; sanb.lidx = sanb.lastidx()
 ```
 This gives the cell a unique ID, stored in the variable `sanb.last`. The `sanb.lastidx()` function looks up in this notebook the index
 of a cell containing the phrase `sanb.last = [value of sanb.last]`. This retrieves the index of the current cell.
+
+```
+!mkdir -p scc
+```
+We create a folder to store the 289 intermediateper-comparison output files our analysis tool will generate for a 17-sample cross-comparison.
 
 ```
 !ls ~/data/*.mcool | itertools-cli combinations-with-replacement 2 | curry-batch "echo {{1}}" "echo {{2}}" "pathlib-cli prefix {{1}}" "pathlib-cli prefix {{2}}" > hicrep_inputs.txt
@@ -155,7 +182,7 @@ We do this by once again piping our comparison filenames and prefixes and using 
 Again, we save this output to `hicrep_results.txt` as a record of our work so far and for convenience, but this isn't strictly necessary.
 
 ```
-!cat hicrep_results.txt |curry-batch "pathlib-cli prefix {{1}}" "pathlib-cli prefix {{2}}" "echo '{{3}}' | ~/scripts/hicrep_mean" | curry-batch "echo {{1}}" "echo {{2}}" "echo {{3}}" "echo {{2}}" "echo {{1}}" "echo {{3}}" | pandas-cli dataframe "df = pd.DataFrame(df.values.reshape(2*df.shape[0], 3)).drop_duplicates().pivot(index=0, columns=1, values=2).apply(pd.to_numeric)" > hicrep_data.yaml
+!cat hicrep_results.txt | curry-batch "echo {{1}}" "echo {{2}}" "echo '{{3}}' | ~/scripts/hicrep_mean" | curry-batch "echo {{1}}" "echo {{2}}" "echo {{3}}" "echo {{2}}" "echo {{1}}" "echo {{3}}" | pandas-cli dataframe "df = pd.DataFrame(df.values.reshape(2*df.shape[0], 3)).drop_duplicates().pivot(index=0, columns=1, values=2).apply(pd.to_numeric)" > hicrep_data.yaml
 ```
 We use `curry-batch` to feed in our previous results into a custom Python script `hicrep_mean` tailor-made for this step, while preserving the filename prefixes for later captioning.
 ```

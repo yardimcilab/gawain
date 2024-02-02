@@ -1,5 +1,8 @@
 **Wistan** is a platform to build, run, organize and share data analysis pipelines.
 
+**Author:** Ben Skubi, M.S. BME (skubi@ohsu.edu)
+**Institutional affiliation:** [Yardimci](https://www.ohsu.edu/people/galip-grkan-yardimci-phd) and [Adey](https://adeylab.org/) labs, [CEDAR](https://www.ohsu.edu/knight-cancer-institute/cedar), [OHSU BME](https://www.ohsu.edu/school-of-medicine/biomedical-engineering)
+
 ## Table of Contents
 - [Installation](#installation)
 - [Paradigm](#wistans-paradigm)
@@ -48,13 +51,14 @@ This makes the analysis instantly reproducible and easy to share. It is also hel
     - As a simple text filter (`cat args.txt | curry-batch "echo {1}" "echo {2}" "echo {1}{1}{2}{2}"`)
     - To orchestrate execution of the analysis tool
     - To load the contents of output files scattered on the hard drive into a single dataframe for aggregation, analysis and display
+    Note that if you are using `curry-batch` in the context of a Jupyter notebook in a `!`-prefixed shell command, its brackets must be double-escaped (i.e. `{{1}}`).
   - `datavis-cli`: A CLI to output boilerplate Python code for loading YAML data to a pandas dataframe and producing a figure based on it. Currently just supports Seaborn's `heatmap` and `clustermap`, but can be straightforwaredly extended to any data visualization package in any language.
   - `nbcell-check-cli`: A tool for running regex on Jupyter notebook cells using Python's [re](https://docs.python.org/3/library/re.html) package. Returns the index of cells matching the regex.
   - `nbformat-cli`: A tool for manipulating Jupyter notebook cells at the command line, based on the [nbformat](https://nbformat.readthedocs.io/en/latest/) package. Currently only adds cells at a specified index, but aims to perform other manipuations: removing, overwriting, deleting, moving, reading and writing notebook and cell metadata and so forth.
   -  `sanb`: Used in conjunction with `nbcell-check-cli` and `nbformat-cli` to make Jupyter notebooks "self-aware." Notebook cells normally have no ability to access their own cell metadata or notebook metadata, making it difficult to make notebooks self-editing. `sanb` allows the user to specify the path of the notebook itself and give cells cell-specific identifiers in code. This lets cells discover their own index in the list of cells the notebook contains. In turn, this allows code in cells to edit themselves and the notebook as a whole. This is what permits a Wistan pipeline run from a Jupyter notebook to append to itself the results of a pipeline, such as code to make and edit a figure.
 
 ## Introduction to Unix pipeline control
-**YAML, stdin and stdout, |, ||, >, >>, &, &&, (), ; and tee**
+**YAML, stdin and stdout, !, |, ||, >, >>, &, &&, (), ; and tee**
 
 Not all users are familiar with YAML or the Unix flow-of-control operators.
 
@@ -81,6 +85,7 @@ pass the text.
 
 - **stdin (Standard Input)** is a stream from which a program reads its input data. It's typically associated with the keyboard input or another program's output.
 - **stdout (Standard Output)** is a stream to which a program writes its output data. It's typically displayed on the screen or can be redirected to a file or another program.
+- **!:** In Jupyter notebooks, lines prefixed with `!` are interpreted as shell commands. You can store the value of variables from non-`!` using `{}`-enclosed wildcards. Note that if you are using `curry-batch`, its brackets must be double-escaped (i.e. `{{1}}`).
 - **| (Pipe):** Used to pass the output of one command as the input to another command. For example, `ls | grep "txt"` uses the output of ls as the input for grep to filter out lines containing "txt".
 - **|| (OR):** Used between two commands. The second command is executed only if the first command fails (exits with a non-zero status). For example, `command1 || command2 means command2` is executed only if `command1` fails.
 - **> (Redirect Output):** This operator is used to redirect the output of a command to a file, overwriting the file if it already exists. For example, `echo "Hello" > file.txt` writes "Hello" to file.txt.
@@ -90,6 +95,110 @@ pass the text.
 - **() (Subshell):** Commands inside parentheses are executed in a subshell. This means they are executed in a separate process, and any changes to the environment (like changing directories or setting variables) do not affect the current shell. For example, `(cd folder; command)` runs command in folder, but the current shell's directory does not change.
 - **; (Sequential Execution):** It separates commands to be executed sequentially, regardless of the success or failure of the previous command. For example, `command1; command2` executes `command1` and then `command2`, one after the other.
 - **tee (Branch Output):** The tee command reads from standard input and writes to both standard output and one or more files, effectively branching the output. For example, `command | tee file.txt` displays the output of command on the screen and also writes it to file.txt.
+
+## Anatomy of a Wistan pipeline
+
+For mass adoption, you should probably make a tailored command-line interface for your pipeline. Here, we're going to look at the building blocks
+of the first pipeline built with Wistan. It originates in the bioinformatics field of the study of chromatin conformation. The author was using a tool
+called [hicrep](https://github.com/dejunlin/hicrep) to compute sample-vs-sample reproducibility scores for a large number of data files. The challenge
+was that `hicrep` only allows one to to run a single sample-vs-sample comparison. Its output is a plaintext series of comments and per-chromosome
+reproducibility scores in a text file.
+
+The author wanted to batch `hicrep` comparisons on a large number of data files, compute the mean of the per-chromosome scores for each comparison,
+and produce a [clustermap](https://seaborn.pydata.org/generated/seaborn.clustermap.html) with row and column captions being the data file prefixes.
+Having a whole PhD in this subfield ahead of him, the author wanted a tool to make this conveniently in the future.
+
+The pipeline starts with a single two-cell Jupyter notebook.
+
+**Cell 1**
+```
+import sanb
+sanb.set_notebook("demo.ipynb")
+```
+
+This initializes `sanb` with the name of the notebook, making it possible for the pipeline to append its outputs to the notebook itself.
+
+**Cell 2**
+```
+sanb.last = "samb_cell0"; sanb.lidx = sanb.lastidx()
+!ls ~/data/*.mcool | itertools-cli combinations-with-replacement 2 | curry-batch "echo {{1}}" "echo {{2}}" "pathlib-cli prefix {{1}}" "pathlib-cli prefix {{2}}" > hicrep_inputs.txt
+!cat hicrep_inputs.txt | curry-batch "hicrep {{1}} {{2}} scc/{{3}}_{{4}}.txt --h 1 --binSize 1000000 --dBPMax 5000000" > /dev/null && cat hicrep_inputs.txt | curry-batch "echo {{3}}" "echo {{4}}" > hicrep_results.txt
+!cat hicrep_results.txt | curry-batch "pathlib-cli prefix {{1}}" "pathlib-cli prefix {{2}}" "echo '{{3}}' | ~/scripts/hicrep_mean" | curry-batch "echo {{1}}" "echo {{2}}" "echo {{3}}" "echo {{2}}" "echo {{1}}" "echo {{3}}" | pandas-cli dataframe "df = pd.DataFrame(df.values.reshape(2*df.shape[0], 3)).drop_duplicates().pivot(index=0, columns=1, values=2).apply(pd.to_numeric)" > hicrep_data.yaml
+!datavis-cli load-dataframe hicrep_data.yaml df | nbformat-cli cell add {sanb.notebook} {sanb.lidx} --distance 1
+!datavis-cli clustermap df | nbformat-cli cell add {sanb.notebook} {sanb.lidx} --distance 2
+```
+
+Let's take this line by line.
+
+```
+sanb.last = "samb_cell0"; sanb.lidx = sanb.lastidx()
+```
+This gives the cell a unique ID, stored in the variable `sanb.last`. The `sanb.lastidx()` function looks up in this notebook the index
+of a cell containing the phrase `sanb.last = [value of sanb.last]`. This retrieves the index of the current cell.
+
+```
+!ls ~/data/*.mcool | itertools-cli combinations-with-replacement 2 | curry-batch "echo {{1}}" "echo {{2}}" "pathlib-cli prefix {{1}}" "pathlib-cli prefix {{2}}" > hicrep_inputs.txt
+```
+The data to be compared has a file extension `.mcool`. We load all the filenames to be compared, then generate combinations with replacement.
+We then extend this to a list of four strings: the two filenames, plus the filename prefixes that we wish to use.
+We store this combination in `hicrep_inputs.txt` using a redirect for convenience and as a record of our output so far.
+
+```
+!cat hicrep_inputs.txt | curry-batch "hicrep {{1}} {{2}} scc/{{3}}_{{4}}.txt --h 1 --binSize 1000000 --dBPMax 5000000" > /dev/null && cat hicrep_inputs.txt | curry-batch "echo {{3}}" "echo {{4}}" "cat scc/{{3}}_{{4}}.txt" > hicrep_results.txt
+```
+We load the list of filenames and prefixes. Note that this is not strictly necessary - we could have just piped the output from the previous line into this one.
+Next, we call the main `hicrep` command to compute reproducibility scores on all pairs of input files. For each list of `file1 file2 prefix1 prefix2` strings in the input:
+ - `{{1}}` and `{{2}}` are replaced by `file1` and `file2`, and represent the input files.
+ - `{{3}}` and `{{4}}` are replaced by `prefix1` and `prefix2`. `scc/{{3}}_{{4}}.txt` will be the location of the output file.
+We silence the message outputs from hicrep by redirecting them to `/dev/null`. The `hicrep` program saves its outputs to individual text files, so we need to retrieve them.
+We do this by once again piping our comparison filenames and prefixes and using `curry-batch` to load the raw output file contents using `cat`.
+Again, we save this output to `hicrep_results.txt` as a record of our work so far and for convenience, but this isn't strictly necessary.
+
+```
+!cat hicrep_results.txt |curry-batch "pathlib-cli prefix {{1}}" "pathlib-cli prefix {{2}}" "echo '{{3}}' | ~/scripts/hicrep_mean" | curry-batch "echo {{1}}" "echo {{2}}" "echo {{3}}" "echo {{2}}" "echo {{1}}" "echo {{3}}" | pandas-cli dataframe "df = pd.DataFrame(df.values.reshape(2*df.shape[0], 3)).drop_duplicates().pivot(index=0, columns=1, values=2).apply(pd.to_numeric)" > hicrep_data.yaml
+```
+We use `curry-batch` to feed in our previous results into a custom Python script `hicrep_mean` tailor-made for this step, while preserving the filename prefixes for later captioning.
+```
+#!/usr/bin/env python3
+import sys, statistics, click
+
+hicrep_output = sys.stdin.read().split('\n')
+scc_scores = []
+for line in hicrep_output:
+    try:
+        scc_scores.append(float(line))
+    except ValueError:
+        continue
+click.echo(statistics.mean(scc_scores))
+```
+This script merely filters for floating-point numbers in the output for a particular comparison, computes the mean, and prints it to `stdout`. This is the only analysis-specific script in the pipeline.
+We then use `curry-batch` to duplicate the result with the order reversed, so that we can conveniently produce a symmetric matrix. This gives us a six-element `col_m row_n value col_n row_m value` list.
+We then load this into a pandas dataframe and reshape it to get the desired square, symmetric matrix labeled with our captions. First, we append it to a `2nx3` matrix, with row caption, column caption,
+and value columns. As the main diagonal is duplicated, we drop duplicates. Then we create a pivot dataframe to get it into the desired square shape and convert the values to numeric. Finally, we save this
+to a data file `hicrep_data.yaml` for convenience.
+
+```
+!datavis-cli load-dataframe hicrep_data.yaml df | nbformat-cli cell add {sanb.notebook} {sanb.lidx} --distance 1
+```
+Our computations are done, and all that remains is to create a figure in the interactive environment of our Jupyter notebook for easy tweaking.
+This function starts by leveraging the `sanb` package to add a new cell to the notebook immediately after the pipeline-running cell containing code
+to load our output data into a pandas DataFrame called `df`.
+
+```
+!datavis-cli clustermap df | nbformat-cli cell add {sanb.notebook} {sanb.lidx} --distance 2
+```
+Finally, we add another cell immediately after the data-loading function that contains the function call
+to produce a Seaborn clustermap from our data. The arguments to that function are comprehensively and explicitly
+initialized to default values, and a link to the Seaborn clustermap API is printed for reference. The clustermap
+uses a perceptually-accurate, colorblind-friendly colormap from [colorcet](https://colorcet.com/download/index.html) by default. These parameters
+can be tweaked in the cell and the clustermap immediately reproduced.
+
+After these cells are produced by the pipeline cell, the notebook will need to be reloaded using `File/Reload Notebook From Disk`.
+![image](https://github.com/yardimcilab/wistan/assets/86805107/a0225bb1-346a-4c94-88d5-fc7ff92fa2b4)
+
+As you can see, outside the tiny analysis-specific `hicrep_mean` plugin script, all components of this pipeline are simple reusable parts.
+Although this pipeline is unwieldly in the exposed form presented here, it can be easily wrapped into a more convenient command line interface
+exposing just the variables the user needs to set. We provide it here as an example of how to build a useful Wistan pipeline.
 
 ## Why "Wistan"?
 

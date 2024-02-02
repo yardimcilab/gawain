@@ -1,17 +1,24 @@
 **Gawain** is an environment for building, running, organizing and sharing data analysis pipelines.
 
-**Install**
+## Table of Contents
+- [Installation](#installation)
+- [Paradigm](#gawains-paradigm)
+- [Infrastructure tools](#gawains-infrastructure-tools)
+- [Introduction to Unix pipeline control](#introduction-to-unix-pipeline-control)
+
+## Installation
 ```
 curl -O https://raw.githubusercontent.com/yardimcilab/gawain/main/gawain.yaml
 mamba env create -f gawain.yaml
 mamba activate gawain
 ```
 
-Gawain's paradigm is the [Unix philosophy](http://www.catb.org/~esr/writings/taoup/html/index.html) of software design.
+## Gawain's paradigm
+Gawain embodies the [Unix philosophy](http://www.catb.org/~esr/writings/taoup/html/index.html) of software design.
 
 It is built on an infrastructure of [small](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2878022), [simple](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2877917), [modular](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2877537) [generative tools](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2878742), [composed](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2877684) into [YAML](https://yaml.org/)-based [textual](http://www.catb.org/~esr/writings/taoup/html/ch05s01.html) and [extensible](http://www.catb.org/~esr/writings/taoup/html/ch01s06.html#id2879112) pipelines.
 
-Gawain's is modest. All its parts are orthogonal. You can use and adjust the parts you like:
+**Gawain's is modest.** All its parts are orthogonal. You can use and adjust the parts you like:
  - A particular infrastructure tool, like `itertools-cli`
  - A single analysis pipeline built on Gawain infrastructure
  - `sanb` for self-aware Jupyter notebooks
@@ -19,7 +26,7 @@ Gawain's is modest. All its parts are orthogonal. You can use and adjust the par
 It is fully compatible with standard workflow management tools like [Snakemake](https://snakemake.readthedocs.io/en/stable/) and [Nextflow](https://www.nextflow.io/).
 Indeed, its original motivation was to add value to these systems by making it easier to write the shell-based analyses that they orchestrate.
 
-Gawain is ambitious.
+**Gawain is ambitious.**
  - Infrastructure tools make it easy to orchestrate complex comparisons across data samples.
  - Pipelines run from within self-aware Jupyter notebooks append results to the notebook itself.
  - Figures are produced and tweaked in the notebook's interactive environment.
@@ -29,7 +36,7 @@ Gawain is ambitious.
 When used to its full potential, Gawain results in a Jupyter notebook containing both the pipeline(s) and its intermediate and final outputs.
 This makes the analysis instantly reproducible and easy to share. It is also helpful when you wish to review your own work in the future.
 
-**Description of Gawain's infrastructure tools**
+## Gawain's infrastructure tools
 
  - `itertools-cli`: A CLI for parts of the [itertools](https://docs.python.org/3/library/itertools.html) library. Generate combinations of filenames and other things. Receives data from `stdin` and writes it YAMLized to `stdout`.
  - `pathlib-cli`: A CLI for parts of the [pathlib](https://docs.python.org/3/library/pathlib.html) library. Extract parts of paths, such as the directory, prefix, or suffix.
@@ -44,7 +51,8 @@ This makes the analysis instantly reproducible and easy to share. It is also hel
   - `nbformat-cli`: A tool for manipulating Jupyter notebook cells at the command line, based on the [nbformat](https://nbformat.readthedocs.io/en/latest/) package. Currently only adds cells at a specified index, but aims to perform other manipuations: removing, overwriting, deleting, moving, reading and writing notebook and cell metadata and so forth.
   -  `sanb`: Used in conjunction with `nbcell-check-cli` and `nbformat-cli` to make Jupyter notebooks "self-aware." Notebook cells normally have no ability to access their own cell metadata or notebook metadata, making it difficult to make notebooks self-editing. `sanb` allows the user to specify the path of the notebook itself and give cells cell-specific identifiers in code. This lets cells discover their own index in the list of cells the notebook contains. In turn, this allows code in cells to edit themselves and the notebook as a whole. This is what permits a Gawain pipeline run from a Jupyter notebook to append to itself the results of a pipeline, such as code to make and edit a figure.
 
-**Introduction to Unix pipeline control: YAML, stdin and stdout, |, ||, >, >>, &, &&, (), ; and tee**
+## Introduction to Unix pipeline control
+**YAML, stdin and stdout, |, ||, >, >>, &, &&, (), ; and tee**
 
 Not all users are familiar with YAML or the Unix flow-of-control operators.
 
